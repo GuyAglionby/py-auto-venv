@@ -15,6 +15,10 @@ _PY_AUTO_VENV_PROJECT_ROOT=""
 
 _py_auto_venv() {
   local base_repo_dir="${PY_AUTO_VENV_BASE_DIR:-/}"
+  # Strip trailing slash for glob patterns: when base_repo_dir is "/",
+  # "${base_repo_dir}/*" would produce "//*" which doesn't match normal
+  # absolute paths. Stripping gives "" so "${base_glob}/*" becomes "/*".
+  local base_glob="${base_repo_dir%/}"
 
   # Fast-path: still in same project
   if [[ -n "$VIRTUAL_ENV" && -n "$_PY_AUTO_VENV_PROJECT_ROOT" \
@@ -23,9 +27,9 @@ _py_auto_venv() {
   fi
 
   # Only act inside base_repo_dir
-  if [[ "$PWD"/ != "$base_repo_dir"/* ]]; then
-    if [[ "$OLDPWD"/ == "$base_repo_dir"/* ]]; then
-      if type deactivate &>/dev/null; then
+  if [[ "$PWD"/ != "$base_glob"/* ]]; then
+    if [[ "$OLDPWD"/ == "$base_glob"/* ]]; then
+      if [[ -n "$VIRTUAL_ENV" ]] && type deactivate &>/dev/null; then
         deactivate
         _PY_AUTO_VENV_PROJECT_ROOT=""
       fi
@@ -34,7 +38,7 @@ _py_auto_venv() {
   fi
 
   # Deactivate stale env before probing
-  if type deactivate &>/dev/null; then
+  if [[ -n "$VIRTUAL_ENV" ]] && type deactivate &>/dev/null; then
     deactivate
     _PY_AUTO_VENV_PROJECT_ROOT=""
   fi
@@ -42,7 +46,7 @@ _py_auto_venv() {
   # Phase 1: Filesystem walk
   local dir="$PWD"
   local poetry_lock_dir=""
-  while [[ "$dir"/ == "$base_repo_dir"/* ]]; do
+  while [[ "$dir"/ == "$base_glob"/* ]]; do
     # 1. UV_PROJECT_ENVIRONMENT
     if [[ -n "$UV_PROJECT_ENVIRONMENT" ]]; then
       local uv_env=""

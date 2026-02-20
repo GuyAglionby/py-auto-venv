@@ -95,3 +95,12 @@ _py_auto_venv() {
 
 autoload -Uz add-zsh-hook
 add-zsh-hook chpwd _py_auto_venv
+
+# Run once before the first prompt so new tmux windows/panes get the
+# venv. Must be precmd (not inline) because the theme sets PROMPT after
+# plugins load — an inline activation's prompt prefix gets overwritten.
+_py_auto_venv_startup() {
+  add-zsh-hook -d precmd _py_auto_venv_startup
+  _py_auto_venv
+}
+add-zsh-hook precmd _py_auto_venv_startup

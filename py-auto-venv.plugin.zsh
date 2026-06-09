@@ -103,4 +103,5 @@ _py_auto_venv_startup() {
   add-zsh-hook -d precmd _py_auto_venv_startup
   _py_auto_venv
 }
-add-zsh-hook precmd _py_auto_venv_startup
+# Run before terminal integrations that decorate PS1 during precmd.
+precmd_functions=(_py_auto_venv_startup ${precmd_functions:#_py_auto_venv_startup})
